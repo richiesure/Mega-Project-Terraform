@@ -2,10 +2,6 @@ provider "aws" {
   region = "eu-west-2"
 }
 
-variable "ssh_key_name" {
-  default = "tier-1" # Without .pem extension
-}
-
 resource "aws_vpc" "Richie_vpc" {
   cidr_block = "10.0.0.0/16"
 
