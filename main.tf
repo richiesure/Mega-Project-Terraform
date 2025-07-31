@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "eu-west-2"
+  region = var.region
 }
 
 resource "aws_vpc" "Richie_vpc" {
@@ -49,10 +49,30 @@ resource "aws_route_table_association" "Richie_association" {
   route_table_id = aws_route_table.Richie_route_table.id
 }
 
-# Use your existing security group instead of creating new ones
-# Cluster and Node Group will use this existing SG
-locals {
-  existing_sg_id = "sg-067f90f83c62fd777"
+# ✅ Security group created inside the same VPC
+resource "aws_security_group" "Richie_cluster_sg" {
+  name   = "Richie-cluster-sg"
+  vpc_id = aws_vpc.Richie_vpc.id
+
+  description = "Allow all traffic for EKS cluster"
+
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "Richie-cluster-sg"
+  }
 }
 
 resource "aws_eks_cluster" "Richie" {
@@ -61,8 +81,10 @@ resource "aws_eks_cluster" "Richie" {
 
   vpc_config {
     subnet_ids         = aws_subnet.Richie_subnet[*].id
-    security_group_ids = [local.existing_sg_id]
+    security_group_ids = [aws_security_group.Richie_cluster_sg.id]
   }
+
+  depends_on = [aws_iam_role.Richie_cluster_role]
 }
 
 resource "aws_eks_addon" "ebs_csi_driver" {
@@ -89,24 +111,24 @@ resource "aws_eks_node_group" "Richie" {
 
   remote_access {
     ec2_ssh_key               = var.ssh_key_name
-    source_security_group_ids = [local.existing_sg_id]
+    source_security_group_ids = [aws_security_group.Richie_cluster_sg.id]
   }
 
   depends_on = [aws_eks_cluster.Richie]
 }
 
-# Cluster Role
+# EKS Cluster IAM Role
 resource "aws_iam_role" "Richie_cluster_role" {
   name = "Richie-cluster-role"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
     Statement = [
       {
-        Effect = "Allow"
+        Effect = "Allow",
         Principal = {
           Service = "eks.amazonaws.com"
-        }
+        },
         Action = "sts:AssumeRole"
       }
     ]
@@ -118,18 +140,18 @@ resource "aws_iam_role_policy_attachment" "cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
-# Node Group Role
+# EKS Node Group IAM Role
 resource "aws_iam_role" "devopsshack_node_group_role" {
   name = "devopsshack-node-group-role"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
     Statement = [
       {
-        Effect = "Allow"
+        Effect = "Allow",
         Principal = {
           Service = "ec2.amazonaws.com"
-        }
+        },
         Action = "sts:AssumeRole"
       }
     ]
@@ -155,4 +177,3 @@ resource "aws_iam_role_policy_attachment" "ebs_policy" {
   role       = aws_iam_role.devopsshack_node_group_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
 }
-
