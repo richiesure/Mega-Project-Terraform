@@ -98,7 +98,7 @@ resource "aws_eks_addon" "ebs_csi_driver" {
 resource "aws_eks_node_group" "Richie" {
   cluster_name    = aws_eks_cluster.Richie.name
   node_group_name = "Richie-node-group"
-  node_role_arn   = aws_iam_role.devopsshack_node_group_role.arn
+  node_role_arn   = aws_iam_role.Richie_node_group_role.arn
   subnet_ids      = aws_subnet.Richie_subnet[*].id
 
   scaling_config {
@@ -141,8 +141,8 @@ resource "aws_iam_role_policy_attachment" "cluster_policy" {
 }
 
 # EKS Node Group IAM Role
-resource "aws_iam_role" "devopsshack_node_group_role" {
-  name = "devopsshack-node-group-role"
+resource "aws_iam_role" "Richie_node_group_role" {
+  name = "Richie-node-group-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -159,21 +159,21 @@ resource "aws_iam_role" "devopsshack_node_group_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "worker_node_policy" {
-  role       = aws_iam_role.devopsshack_node_group_role.name
+  role       = aws_iam_role.Richie_node_group_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
 }
 
 resource "aws_iam_role_policy_attachment" "cni_policy" {
-  role       = aws_iam_role.devopsshack_node_group_role.name
+  role       = aws_iam_role.Richie_node_group_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }
 
 resource "aws_iam_role_policy_attachment" "ecr_policy" {
-  role       = aws_iam_role.devopsshack_node_group_role.name
+  role       = aws_iam_role.Richie_node_group_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
 resource "aws_iam_role_policy_attachment" "ebs_policy" {
-  role       = aws_iam_role.devopsshack_node_group_role.name
+  role       = aws_iam_role.Richie_node_group_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
 }
