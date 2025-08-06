@@ -163,3 +163,8 @@ subjects:
 
 ### Generate token using service account in the namespace
 [Create Token](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/#:~:text=To%20create%20a%20non%2Dexpiring,with%20that%20generated%20token%20data.)
+
+After generating the secret key above, use this to add it to the namespace
+kubectl apply -f sec.yml -n webapps
+
+Remember to add jenkins to replace the serviceaccount 
